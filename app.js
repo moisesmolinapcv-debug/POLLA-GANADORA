@@ -626,11 +626,20 @@ async function syncFromSupabase() {
       .select('*')
       .order('match_no', { ascending: true });
     if (dbMatches) {
-      STATE.matches = dbMatches.map(m => ({
-        ...m,
-        date: m.match_date, // Map match_date to date for frontend compatibility
-        group: m.group_letter // Map group_letter to group for frontend compatibility
-      }));
+      STATE.matches = dbMatches.map(m => {
+        let localDate = m.match_date;
+        if (typeof WORLD_CUP_DATA !== 'undefined' && WORLD_CUP_DATA.matches) {
+          const localMatch = WORLD_CUP_DATA.matches.find(lm => lm.match_no === m.match_no);
+          if (localMatch) {
+            localDate = localMatch.date; // Use the local VET date string
+          }
+        }
+        return {
+          ...m,
+          date: localDate,
+          group: m.group_letter // Map group_letter to group for frontend compatibility
+        };
+      });
     }
     
     // 2. Batch config queries in syncFromSupabase() into a single app_config select
